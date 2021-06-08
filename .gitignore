@@ -1,4 +1,4 @@
 .DS_Store
-.csv
-.json
-outliers/data/
+**/perPatientVariance/data/
+**/outliers/data/
+
