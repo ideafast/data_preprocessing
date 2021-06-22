@@ -1,0 +1,22 @@
+number of ucam participants: 128
+
+dmp participants: 97
+Dreem report: exact mismatches as percentage: 71.108, mismatched total coverage as percentage: 2.450, ucam says expect: 1102, dmp shows we got: 1075, daily matches count: 803, daily mismatches count: 571
+
+dmp participants: 95
+VTT eBedSensor report: exact mismatches as percentage: 11.270, mismatched total coverage as percentage: 2.173, ucam says expect: 2485, dmp shows we got: 2539, daily matches count: 2378, daily mismatches count: 268
+
+dmp participants: 113
+VTT SMA report: exact mismatches as percentage: 148.696, mismatched total coverage as percentage: 138.570, ucam says expect: 1343, dmp shows we got: 3204, daily matches count: 1304, daily mismatches count: 1939
+
+dmp participants: 110
+Vital Patch report: exact mismatches as percentage: 45.250, mismatched total coverage as percentage: 9.329, ucam says expect: 1147, dmp shows we got: 1254, daily matches count: 979, daily mismatches count: 443
+
+dmp participants: 107
+Axivity report: exact mismatches as percentage: 43.981, mismatched total coverage as percentage: 14.786, ucam says expect: 1170, dmp shows we got: 1343, daily matches count: 1030, daily mismatches count: 453
+
+dmp participants: 113
+McRobertsn Move Monitor report: exact mismatches as percentage: 196.412, mismatched total coverage as percentage: 189.955, ucam says expect: 1105, dmp shows we got: 3204, daily matches count: 1087, daily mismatches count: 2135
+
+dmp participants: 60
+ZKOne report: exact mismatches as percentage: 62.657, mismatched total coverage as percentage: 5.349, ucam says expect: 1290, dmp shows we got: 1221, daily matches count: 956, daily mismatches count: 599

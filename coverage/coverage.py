@@ -39,6 +39,12 @@ def duration_from_period(period):
     delta = d1 - d0
     return (delta.days)
 
+def duration_from_start_end(start, end):
+    d0 = datetime.strptime(start, "%Y-%m-%d")
+    d1 = datetime.strptime(end, "%Y-%m-%d")
+    delta = d1 - d0
+    return (delta.days)
+
 def startWear(period):
     newP = period.split()
     d0 = datetime.strptime(period.split()[0], "%Y-%m-%d")
@@ -98,11 +104,32 @@ def matching_device_check(ucam_device_id, dmp_device_id):
             result = True
         elif ucam_dev == 'BTF' and dmp_dev == "a device name":
             result = True
-    else:
-        print("matching_device_check failed due to None type")
+    # else:
+        # print("matching_device_check failed due to None type")
     return result
 
+
+def print_report(dev_name):
+    # calculate percentage of mismatches for exact days
+    if mismatches_count > 0 and matches_count > 0:
+        exact_mismatches_percent = float(mismatches_count) / float(matches_count) * 100
+    else:
+        exact_mismatches_percent = 0
+    # calculate percentage of mismatches total days contributed, regardless of when these days occurred
+    mismatched_total = abs(ucam_count - dmp_count) / float(ucam_count) * 100
+    print("%s report: exact mismatches as percentage: %0.3f, mismatched total coverage as percentage: %0.03f, ucam says expect: %s, dmp shows we got: %s, daily matches count: %s, daily mismatches count: %s" % (dev_name, exact_mismatches_percent, mismatched_total, ucam_count, dmp_count, matches_count, mismatches_count))
+
+
 def comparePeriods(df, device):
+    # reset master variables
+    global ucam_count
+    global dmp_count
+    global matches_count
+    global mismatches_count
+    ucam_count = 0
+    dmp_count = 0
+    matches_count = 0
+    mismatches_count = 0
     # add usful data to the dataframe
     df['Start'] = df['Period'].apply(startWear)
     df['End'] = df['Period'].apply(endWear)
@@ -122,14 +149,6 @@ def comparePeriods(df, device):
         for index, row in p_recs.iterrows():
             # check the start, end, duration of the DMP recs and modify wearList to reflect these dmp wear dates
             amendWearList(row['Start'], row['End'], row['Duration'],wearList)
-        # do some verification here e.g. check how many wearList days have dmp_rec set true
-        dmp_count = 0
-        for y in wearList:
-            if y.dmp_rec == True:
-                # set dmp to true
-                dmp_count += 1
-        # print("participant %s has %s wear days" % (p_id, dmp_count))
-        # now modify wearlist to reflect UCAM wear periods
         # loop through ucam looking for our participant
         for p in ucam['data']:
             formatted_ucam_id = formatParticipantID(p['patient_id'])
@@ -138,19 +157,33 @@ def comparePeriods(df, device):
                 # get the data that matches our current device
                 for ucam_rec in p['devices']:
                     if matching_device_check(ucam_rec['device_id'], device):
-                        # do something with this matching UCAM rec
-                        print("we have found the data for this patient and device in UCAM")
-                        # input("waiting...")
+                        # do something with this matching ucam_rec...
+                        # get start, end and duration;
+                        start_date = ucam_rec['start_wear'].split("T")[0]
+                        end_date = ucam_rec['end_wear'].split("T")[0]
+                        ucam_duration = duration_from_start_end(start_date, end_date)
+                        # make a new wear list - list consecutive days of a wear period from dmp
+                        new_ucam_List = listFromDuration(start_date, ucam_duration)  
+                        # ammend main wear list
+                        for x in new_ucam_List:
+                            for y in wearList:
+                                if y.date == x:
+                                    # set dmp to true
+                                    y.ucam_rec = True 
                 break
-        # 1) Where data[x].patient_id = new_p_id; look at data[x].patient_id.devices and loot at first three characters of 
-        # device_id to determin if we are lookng at data related to the device of interest.
-        # 2) if we find a match of participant and device, we take the start time, end time then calculate duration; 
-        # then make a new list; then modify the wearList
-
-        # output the number of days matched 
-        # output the number of days mismatched
-        # output the total days expected (from ucam) and total days collected (from DMP)
-        print("******** NEXT PARTICIPANT **********")
+        # we should now have a wearList with dmp wear and ucam wear entries complete 
+        for x in wearList:
+            if x.ucam_rec == True:
+                ucam_count += 1
+                if x.dmp_rec == False:
+                    mismatches_count += 1
+            if x.dmp_rec == True:
+                dmp_count += 1
+                if x.ucam_rec == False:
+                    mismatches_count += 1
+            if x.ucam_rec == True and x.dmp_rec == True:
+                 matches_count += 1
+        # onto the next participant
 
 
 ###################### load UCAM ########################
@@ -167,39 +200,53 @@ for p in ucam['data']:
         ucam_participants.append(id)
 print("number of ucam participants: %s" % (len(ucam_participants)))
 
+# declare these variables
+ucam_count = 0
+dmp_count = 0
+matches_count = 0
+mismatches_count = 0
+
 ###################### Dreem  ########################
 df = pd.read_csv('data/Dreem.csv')
 comparePeriods(df, 'DRM')
+print_report('Dreem')
 
 ###################### ThinkFast ########################
 # NOT WORKING
 # df = pd.read_csv('data/tfa_data.csv')
 # comparePeriods(df, 'TFA')
+# print_report('ThinkFast')
 
 ###################### VTT eBedSensor ########################
 df = pd.read_csv('data/VTTBedSensor.csv')
 comparePeriods(df, 'BED')
+print_report('VTT eBedSensor')
 
 
 ###################### VTT SMA ########################
 df = pd.read_csv('data/StressMonitorApp.csv')
 comparePeriods(df, 'SMA')
+print_report('VTT SMA')
 
 ###################### Vital Patch ########################
 df = pd.read_csv('data/VitalPatch.csv')
 comparePeriods(df, 'VTP')
+print_report('Vital Patch')
 
 ###################### Axivity ########################
 df = pd.read_csv('data/Axivity.csv')
 comparePeriods(df, 'AX6')
+print_report('Axivity')
 
 ###################### McRoberts ########################
 df = pd.read_csv('data/StressMonitorApp.csv')
 comparePeriods(df, 'MMM')
+print_report('McRobertsn Move Monitor')
 
 ###################### ZKOne ########################
 df = pd.read_csv('data/ZKOne.csv')
 comparePeriods(df, 'YSM')
+print_report('ZKOne')
 
 ###################### Everion ########################
 
